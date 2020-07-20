@@ -1,0 +1,8 @@
+# Xcode files
+*.xcodeproj
+
+# Libraries
+*.dylib
+
+# MacOS generated file
+*.DS_Store
