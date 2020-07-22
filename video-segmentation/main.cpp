@@ -6,10 +6,11 @@
 //  Copyright © 2020 Stephen Jaud. All rights reserved.
 //
 
-#include <iostream>
+#include "Program.hpp"
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
+    Program program;
+    program.run();
+    
     return 0;
 }
