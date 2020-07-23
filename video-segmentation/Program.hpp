@@ -9,9 +9,11 @@
 #ifndef Program_hpp
 #define Program_hpp
 
+#include <string>
+
 class Program {
 public:
-    Program();
+    Program(std::string);
     void run();
     
 private:
