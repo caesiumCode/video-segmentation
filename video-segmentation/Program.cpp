@@ -9,22 +9,67 @@
 #include "Program.hpp"
 
 Program::Program(std::string inputPath) {
+    // Load imageset
     loadImageset(inputPath);
     
-    window.create(sf::VideoMode(imageset_dim.x, imageset_dim.y), TITLE);
+    // Setup scale
+    window_scale = getWindowScale(imageset_dim);
+    
+    // Setup sprite
+    texture.loadFromImage(imageset[imageset_index]);
+    sprite.setTexture(texture);
+    sprite.scale(window_scale, window_scale);
+    
+    // Setup window
+    window.create(sf::VideoMode(window_scale*imageset_dim.x, window_scale*imageset_dim.y), TITLE);
     window.setFramerateLimit(30);
 }
 
-void Program::run() {
+float Program::getWindowScale(sf::Vector2u dim) {
+    float scalex = (float) MAX_WIDTH/dim.x, scaley = (float) MAX_HEIGHT/dim.y;
+    
+    if (scalex < scaley)
+        return scalex;
+    else
+        return scaley;
+}
+
+void Program::run() {    
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
-                window.close();
+            handleEvent(event);
         }
         
         window.clear();
+        
+        window.draw(sprite);
+        
         window.display();
+    }
+}
+
+void Program::handleEvent(sf::Event event) {
+    if (event.type == sf::Event::Closed)
+        window.close();
+    
+    if (event.type == sf::Event::KeyPressed) {
+        switch (event.key.code) {
+            case sf::Keyboard::Right:
+                imageset_index = (imageset_index + 1)%imageset_size;
+                texture.update(imageset[imageset_index]);
+                break;
+            
+            case sf::Keyboard::Left:
+                imageset_index--;
+                if (imageset_index < 0)
+                    imageset_index = imageset_size - 1;
+                texture.update(imageset[imageset_index]);
+                break;
+                
+            default:
+                break;
+        }
     }
 }
 
@@ -49,8 +94,9 @@ void Program::loadImageset(std::string inputPath) {
     
     std::sort(filenames.begin(), filenames.end());
     
-    // - - - Set imageset_size variable - - -
+    // - - - Set variable - - -
     imageset_size = (int) filenames.size();
+    imageset_index = 0;
     
     // - - - Load imageset - - -
     std::cout << "INFO: Loading imageset\n";
