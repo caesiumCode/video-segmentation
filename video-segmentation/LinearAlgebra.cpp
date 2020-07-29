@@ -35,6 +35,12 @@ Vector3::Vector3(sf::Color col) {
     z = (float) col.b;
 }
 
+Matrix3 Vector3::outerp() {
+    return Matrix3(Vector3(x*x, x*y, x*z),
+                   Vector3(y*x, y*y, y*z),
+                   Vector3(z*x, z*y, z*z));
+}
+
 // Overload operations
 Vector3 operator+(const Vector3 & u, const Vector3 & v) {
     return Vector3(u.x + v.x, u.y + v.y, u.z + v.z);
@@ -69,12 +75,12 @@ Matrix3 Matrix3::inverse() {
     float det = x.x*(y.y*z.z - y.z*z.y) - x.y*(y.x*z.z - y.z*z.x) + x.z*(y.x*z.y - y.y*z.x);
     
     if (det == 0) {
-        std::cout << "ERROR: Inverse matrix of rank 0\n";
+        //std::cout << "ERROR: Inverse matrix of rank 0\n";
         return Matrix3::Zeros();
     } else {
-        return 1/det * Matrix3(Vector3(y.y*z.z - y.z*z.y, x.z*z.y - x.y*z.z, x.y*y.z - x.z*y.y),
-                               Vector3(y.z*z.x - y.x*z.z, x.x*z.z - x.z*z.x, x.z*y.x - x.x*y.z),
-                               Vector3(y.x*z.y - y.y*z.x, x.y*z.x - x.x*z.y, x.x*y.y - x.y*y.x));
+        return 1./det * Matrix3(Vector3(y.y*z.z - y.z*z.y, x.z*z.y - x.y*z.z, x.y*y.z - x.z*y.y),
+                                Vector3(y.z*z.x - y.x*z.z, x.x*z.z - x.z*z.x, x.z*y.x - x.x*y.z),
+                                Vector3(y.x*z.y - y.y*z.x, x.y*z.x - x.x*z.y, x.x*y.y - x.y*y.x));
     }
 }
 
@@ -89,4 +95,8 @@ Matrix3 operator*(float a, const Matrix3 & M) {
 
 Matrix3 operator+(const Matrix3 & A, const Matrix3 & B) {
     return Matrix3(A.x + B.x, A.y + B.y, A.z + B.z);
+}
+
+Matrix3 operator-(const Matrix3 & A, const Matrix3 & B) {
+    return Matrix3(A.x - B.x, A.y - B.y, A.z - B.z);
 }

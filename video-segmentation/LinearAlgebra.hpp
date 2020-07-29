@@ -13,6 +13,9 @@
 
 #include <SFML/Graphics.hpp>
 
+class Vector3;
+class Matrix3;
+
 // - - - - - Vector3 - - - - -
 class Vector3 {
 public:
@@ -30,6 +33,8 @@ public:
     static Vector3 Ones() {
         return Vector3(1, 1, 1);
     }
+    
+    Matrix3 outerp();
 };
 
 // Overload operations
@@ -64,5 +69,6 @@ public:
 Vector3 operator*(const Matrix3 &, const Vector3 &);
 Matrix3 operator*(float, const Matrix3 &);
 Matrix3 operator+(const Matrix3 &, const Matrix3 &);
+Matrix3 operator-(const Matrix3 &, const Matrix3 &);
 
 #endif /* LinearAlgebra_hpp */

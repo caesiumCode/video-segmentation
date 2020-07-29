@@ -16,6 +16,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "LinearAlgebra.hpp"
+#include "MLEstimator.hpp"
 
 // Density Pixel Estimator
 class DPEstimator {
@@ -23,9 +24,9 @@ public:
     DPEstimator();
     
     void loadData(const std::vector<sf::Image> &);
-    
     void fit(std::string);
-    sf::Image evaluate(int);
+    
+    sf::Image evaluate(int, float);
     
 private:
     void fit_mle();

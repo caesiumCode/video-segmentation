@@ -19,7 +19,7 @@ void DPEstimator::loadData(const std::vector<sf::Image> & imageset) {
     HEIGHT = imageset[0].getSize().y;
     
     // Initialize tensors
-    tensorPixel = std::vector<std::vector<std::vector<Vector3>>>(WIDTH, std::vector<std::vector<Vector3>>(HEIGHT, std::vector<Vector3>(N, Vector3())));
+    tensorPixel = std::vector<std::vector<std::vector<Vector3>>>(WIDTH, std::vector<std::vector<Vector3>>(HEIGHT, std::vector<Vector3>(N, Vector3::Zeros())));
     tensorDensity = std::vector<std::vector<std::vector<float>>>(WIDTH, std::vector<std::vector<float>>(HEIGHT, std::vector<float>(N, 0.)));
     
     // Convert imageset into tensor
@@ -39,8 +39,36 @@ void DPEstimator::fit(std::string method) {
     }
 }
 
-void DPEstimator::fit_mle() {
+sf::Image DPEstimator::evaluate(int k, float s) {
+    sf::Image image_density;
+    image_density.create(WIDTH, HEIGHT, sf::Color(0, 0, 0, 0));
     
+    for (int i = 0; i < WIDTH; i++) {
+        for (int j = 0; j < HEIGHT; j++) {
+            float a = tensorDensity[i][j][k];
+            if (a <= s)
+                a = (1. - a) * 255.;
+            else
+                a = 0.;
+            
+            sf::Color col(255, 0, 0, (int) a);
+            image_density.setPixel(i, j, col);
+        }
+    }
+    
+    return image_density;
+}
+
+void DPEstimator::fit_mle() {
+    for (int i = 0; i < WIDTH; i++) {
+        for (int j = 0; j < HEIGHT; j++) {
+            MLEstimator mlestimator;
+            mlestimator.fit(tensorPixel[i][j]);
+            
+            for (int k = 0; k < N; k++)
+                tensorDensity[i][j][k] = mlestimator.evaluate(tensorPixel[i][j][k], false);
+        }
+    }
 }
 
 void DPEstimator::fit_kde() {

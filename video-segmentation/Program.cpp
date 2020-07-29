@@ -24,8 +24,17 @@ Program::Program(std::string inputPath) {
     window.create(sf::VideoMode(window_scale*imageset_dim.x, window_scale*imageset_dim.y), TITLE);
     window.setFramerateLimit(30);
     
-    // Compute pixel score
-    setEstimator();
+    // Compute segmentation mask
+    std::cout << "INFO: Transforming imageset\n";
+    dpestimator.loadData(imageset);
+    
+    std::cout << "INFO: Running segmentation algorithm\n";
+    dpestimator.fit("mle");
+    
+    std::cout << "INFO: Extract segmentation mask\n";
+    texture_segmentation.loadFromImage(dpestimator.evaluate(imageset_index, threshold));
+    sprite_segmentation.setTexture(texture_segmentation);
+    sprite_segmentation.scale(window_scale, window_scale);
 }
 
 float Program::getWindowScale(sf::Vector2u dim) {
@@ -47,6 +56,7 @@ void Program::run() {
         window.clear();
         
         window.draw(sprite);
+        window.draw(sprite_segmentation);
         
         window.display();
     }
@@ -61,6 +71,9 @@ void Program::handleEvent(sf::Event event) {
             case sf::Keyboard::Right:
                 imageset_index = (imageset_index + 1)%imageset_size;
                 texture.update(imageset[imageset_index]);
+                
+                std::cout << "INFO: Extract segmentation mask\n";
+                texture_segmentation.update(dpestimator.evaluate(imageset_index, threshold));
                 break;
             
             case sf::Keyboard::Left:
@@ -68,6 +81,9 @@ void Program::handleEvent(sf::Event event) {
                 if (imageset_index < 0)
                     imageset_index = imageset_size - 1;
                 texture.update(imageset[imageset_index]);
+                
+                std::cout << "INFO: Extract segmentation mask\n";
+                texture_segmentation.update(dpestimator.evaluate(imageset_index, threshold));
                 break;
                 
             default:
@@ -115,9 +131,4 @@ void Program::loadImageset(std::string inputPath) {
     
     // - - - Set imageset_dim variable - - -
     imageset_dim = imageset[0].getSize();
-}
-
-void Program::setEstimator() {
-    dpestimator.loadData(imageset);
-    dpestimator.fit("mle");
 }
