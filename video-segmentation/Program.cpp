@@ -23,6 +23,9 @@ Program::Program(std::string inputPath) {
     // Setup window
     window.create(sf::VideoMode(window_scale*imageset_dim.x, window_scale*imageset_dim.y), TITLE);
     window.setFramerateLimit(30);
+    
+    // Compute pixel score
+    setEstimator();
 }
 
 float Program::getWindowScale(sf::Vector2u dim) {
@@ -112,4 +115,9 @@ void Program::loadImageset(std::string inputPath) {
     
     // - - - Set imageset_dim variable - - -
     imageset_dim = imageset[0].getSize();
+}
+
+void Program::setEstimator() {
+    dpestimator.loadData(imageset);
+    dpestimator.fit("mle");
 }

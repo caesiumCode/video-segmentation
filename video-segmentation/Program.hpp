@@ -17,6 +17,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "DPEstimator.hpp"
+
 namespace fs = std::filesystem;
 
 
@@ -32,6 +34,7 @@ private:
     
     bool isSupported(std::string);
     void loadImageset(std::string);
+    void setEstimator();
     
     float getWindowScale(sf::Vector2u);
     
@@ -45,6 +48,8 @@ private:
     std::vector<sf::Image> imageset;
     int imageset_size, imageset_index;
     sf::Vector2u imageset_dim;
+    
+    DPEstimator dpestimator;
 };
 
 #endif /* Program_hpp */
