@@ -34,7 +34,6 @@ private:
     
     bool isSupported(std::string);
     void loadImageset(std::string);
-    void setEstimator();
     
     float getWindowScale(sf::Vector2u);
     
@@ -50,6 +49,9 @@ private:
     sf::Vector2u imageset_dim;
     
     DPEstimator dpestimator;
+    float threshold = 0.1;
+    sf::Texture texture_segmentation;
+    sf::Sprite sprite_segmentation;
 };
 
 #endif /* Program_hpp */
