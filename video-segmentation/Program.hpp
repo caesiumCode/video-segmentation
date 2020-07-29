@@ -35,6 +35,8 @@ private:
     bool isSupported(std::string);
     void loadImageset(std::string);
     
+    void updateSegmentationImage(int);
+    
     float getWindowScale(sf::Vector2u);
     
     void handleEvent(sf::Event);

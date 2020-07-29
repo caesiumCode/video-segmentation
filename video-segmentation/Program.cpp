@@ -72,8 +72,7 @@ void Program::handleEvent(sf::Event event) {
                 imageset_index = (imageset_index + 1)%imageset_size;
                 texture.update(imageset[imageset_index]);
                 
-                std::cout << "INFO: Extract segmentation mask\n";
-                texture_segmentation.update(dpestimator.evaluate(imageset_index, threshold));
+                updateSegmentationImage(imageset_index);
                 break;
             
             case sf::Keyboard::Left:
@@ -82,8 +81,7 @@ void Program::handleEvent(sf::Event event) {
                     imageset_index = imageset_size - 1;
                 texture.update(imageset[imageset_index]);
                 
-                std::cout << "INFO: Extract segmentation mask\n";
-                texture_segmentation.update(dpestimator.evaluate(imageset_index, threshold));
+                updateSegmentationImage(imageset_index);
                 break;
                 
             default:
@@ -131,4 +129,9 @@ void Program::loadImageset(std::string inputPath) {
     
     // - - - Set imageset_dim variable - - -
     imageset_dim = imageset[0].getSize();
+}
+
+void Program::updateSegmentationImage(int k) {
+    std::cout << "INFO: Extract segmentation mask " << k+1 << "/" << imageset_size << "\n";
+    texture_segmentation.update(dpestimator.evaluate(k, threshold));
 }
