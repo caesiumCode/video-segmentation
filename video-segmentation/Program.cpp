@@ -28,8 +28,6 @@ Program::Program(std::string inputPath) {
     sprite_cov.scale(window_scale, window_scale);
     
     // Setup sprite
-    texture.loadFromImage(imageset[imageset_index]);
-    sprite.setTexture(texture);
     sprite.scale(window_scale, window_scale);
     
     // Setup window
@@ -41,11 +39,8 @@ Program::Program(std::string inputPath) {
     threshold = expf(log_threshold);
     
     // Compute segmentation mask
-    std::cout << "INFO: Transforming imageset\n";
-    dpestimator.loadData(imageset);
-    
     std::cout << "INFO: Running segmentation algorithm\n";
-    dpestimator.fit("mle");
+    dpestimator.fit(imageset, "mle");
     
     std::cout << "INFO: Extract segmentation mask\n";
     texture_segmentation.loadFromImage(dpestimator.evaluate(imageset_index, threshold));
@@ -101,7 +96,8 @@ void Program::handleEvent(sf::Event event) {
         switch (event.key.code) {
             case sf::Keyboard::Right:
                 imageset_index = (imageset_index + 1)%imageset_size;
-                texture.update(imageset[imageset_index]);
+                image.loadFromFile(imageset[imageset_index]);
+                texture.update(image);
                 
                 updateSegmentationImage(imageset_index);
                 break;
@@ -110,7 +106,8 @@ void Program::handleEvent(sf::Event event) {
                 imageset_index--;
                 if (imageset_index < 0)
                     imageset_index = imageset_size - 1;
-                texture.update(imageset[imageset_index]);
+                image.loadFromFile(imageset[imageset_index]);
+                texture.update(image);
                 
                 updateSegmentationImage(imageset_index);
                 break;
@@ -167,42 +164,36 @@ void Program::loadImageset(std::string inputPath) {
     std::sort(filenames.begin(), filenames.end());
     
     // - - - Set variable - - -
+    imageset = filenames;
     imageset_size = (int) filenames.size();
     imageset_index = 0;
     
-    // - - - Load imageset - - -
-    std::cout << "INFO: Loading imageset\n";
-    for (int i = 0; i < imageset_size; i++) {
-        sf::Image image;
-        if (!image.loadFromFile(filenames[i])) {
-            std::cout << "\nLOADING ERROR : " << filenames[i] << "\n";
-        } else {
-            imageset.push_back(image);
-        }
-    }
-    std::cout << "\n";
+    // - - - Set image variable - - -
+    image.loadFromFile(filenames[imageset_index]);
+    texture.loadFromImage(image);
+    sprite.setTexture(texture);
     
-    // - - - Set imageset_dim variable - - -
-    imageset_dim = imageset[0].getSize();
+    imageset_dim = image.getSize();
 }
 
 void Program::computeImagesetMean() {
     image_mean.create(imageset_dim.x, imageset_dim.y);
+    std::vector<std::vector<Vector3>> temp_mean(imageset_dim.x, std::vector<Vector3>(imageset_dim.y, Vector3::Zeros()));
+    
+    for (int k = 0; k < imageset_size; k++) {
+        sf::Image image_temp;
+        image_temp.loadFromFile(imageset[k]);
+        
+        for (int i = 0; i < imageset_dim.x; i++) {
+            for (int j = 0; j < imageset_dim.y; j++) {
+                temp_mean[i][j] = temp_mean[i][j] + Vector3(image_temp.getPixel(i, j));
+            }
+        }
+    }
     
     for (int i = 0; i < imageset_dim.x; i++) {
         for (int j = 0; j < imageset_dim.y; j++) {
-            float r = 0., g = 0., b = 0.;
-            for (int k = 0; k < imageset_size; k++) {
-                sf::Color col = imageset[k].getPixel(i, j);
-                r += (float) col.r;
-                g += (float) col.g;
-                b += (float) col.b;
-            }
-            r /= (float) imageset_size;
-            g /= (float) imageset_size;
-            b /= (float) imageset_size;
-                        
-            image_mean.setPixel(i, j, sf::Color((int) r, (int) g, (int) b));
+            image_mean.setPixel(i, j, (1./float(imageset_size) * temp_mean[i][j]).toColor());
         }
     }
 }
@@ -213,22 +204,25 @@ void Program::computeImagesetCov() {
     std::vector<std::vector<float>> cov(imageset_dim.x, std::vector<float>(imageset_dim.y, 0.));
     float max_cov = 0;
     
-    for (int i = 0; i < imageset_dim.x; i++) {
-        for (int j = 0; j < imageset_dim.y; j++) {
-            float r = 0., g = 0., b = 0.;
-            for (int k = 0; k < imageset_size; k++) {
-                sf::Color col = imageset[k].getPixel(i, j);
+    for (int k = 0; k < imageset_size; k++) {
+        sf::Image image_temp;
+        image_temp.loadFromFile(imageset[k]);
+        
+        for (int i = 0; i < imageset_dim.x; i++) {
+            for (int j = 0; j < imageset_dim.y; j++) {
+                sf::Color col = image_temp.getPixel(i, j);
                 sf::Color col_mean = image_mean.getPixel(i, j);
                 
-                r += float(col.r - col_mean.r)*float(col.r - col_mean.r);
-                g += float(col.g - col_mean.g)*float(col.g - col_mean.g);
-                b += float(col.b - col_mean.b)*float(col.b - col_mean.b);
+                cov[i][j] += float(col.r - col_mean.r)*float(col.r - col_mean.r) +
+                             float(col.g - col_mean.g)*float(col.g - col_mean.g) +
+                             float(col.b - col_mean.b)*float(col.b - col_mean.b);
             }
-            r /= (float) imageset_size;
-            g /= (float) imageset_size;
-            b /= (float) imageset_size;
-            
-            cov[i][j] = sqrtf(r + g + b);
+        }
+    }
+    
+    for (int i = 0; i < imageset_dim.x; i++) {
+        for (int j = 0; j < imageset_dim.y; j++) {
+            cov[i][j] = sqrtf(cov[i][j] / float(imageset_size));
             if (cov[i][j] > max_cov)
                 max_cov = cov[i][j];
         }
@@ -236,9 +230,8 @@ void Program::computeImagesetCov() {
     
     for (int i = 0; i < imageset_dim.x; i++) {
         for (int j = 0; j < imageset_dim.y; j++) {
-            cov[i][j] = cov[i][j] / max_cov * 255.;
-            
-            image_cov.setPixel(i, j, sf::Color((int) cov[i][j], (int) cov[i][j], (int) cov[i][j]));
+            float val = cov[i][j] / float(max_cov);
+            image_cov.setPixel(i, j, sf::Color((int) val, (int) val, (int) val));
         }
     }
 }

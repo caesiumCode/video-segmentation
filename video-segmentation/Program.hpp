@@ -19,6 +19,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "DPEstimator.hpp"
+#include "LinearAlgebra.hpp"
 
 namespace fs = std::filesystem;
 
@@ -45,11 +46,12 @@ private:
     void handleEvent(sf::Event);
     
     sf::RenderWindow window;
+    sf::Image image;
     sf::Texture texture;
     sf::Sprite sprite;
     float window_scale;
     
-    std::vector<sf::Image> imageset;
+    std::vector<std::string> imageset;
     int imageset_size, imageset_index;
     sf::Vector2u imageset_dim;
     sf::Image image_mean, image_cov;
