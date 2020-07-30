@@ -41,6 +41,10 @@ Matrix3 Vector3::outerp() {
                    Vector3(z*x, z*y, z*z));
 }
 
+sf::Color Vector3::toColor() {
+    return sf::Color((int) x, (int) y, (int) z);
+}
+
 // Overload operations
 Vector3 operator+(const Vector3 & u, const Vector3 & v) {
     return Vector3(u.x + v.x, u.y + v.y, u.z + v.z);

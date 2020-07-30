@@ -23,18 +23,16 @@ class DPEstimator {
 public:
     DPEstimator();
     
-    void loadData(const std::vector<sf::Image> &);
-    void fit(std::string);
+    void fit(const std::vector<std::string> &, std::string);
     
     sf::Image evaluate(int, float);
     
 private:
-    void fit_mle();
-    void fit_kde();
+    void fit_mle(const std::vector<std::string> &);
+    void fit_kde(const std::vector<std::string> &);
     
     int N, WIDTH, HEIGHT;
     
-    std::vector<std::vector<std::vector<Vector3>>> tensorPixel; // WIDTH x HEIGHT x N ( x 3 )
     std::vector<std::vector<std::vector<float>>> tensorDensity; // WIDTH x HEIGHT x N
 };
 

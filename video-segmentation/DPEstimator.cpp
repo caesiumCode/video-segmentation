@@ -12,28 +12,11 @@ DPEstimator::DPEstimator() {
     
 }
 
-void DPEstimator::loadData(const std::vector<sf::Image> & imageset) {
-    // Get tensor dimensions
-    N = (int) imageset.size();
-    WIDTH = imageset[0].getSize().x;
-    HEIGHT = imageset[0].getSize().y;
-    
-    // Initialize tensors
-    tensorPixel = std::vector<std::vector<std::vector<Vector3>>>(WIDTH, std::vector<std::vector<Vector3>>(HEIGHT, std::vector<Vector3>(N, Vector3::Zeros())));
-    tensorDensity = std::vector<std::vector<std::vector<float>>>(WIDTH, std::vector<std::vector<float>>(HEIGHT, std::vector<float>(N, 0.)));
-    
-    // Convert imageset into tensor
-    for (int i = 0; i < WIDTH; i++)
-        for (int j = 0; j < HEIGHT; j++)
-            for (int k = 0; k < N; k++)
-                tensorPixel[i][j][k] = Vector3(imageset[k].getPixel(i, j));
-}
-
-void DPEstimator::fit(std::string method) {
+void DPEstimator::fit(const std::vector<std::string> & imageset, std::string method) {
     if (!method.compare("mle")) {
-        fit_mle();
+        fit_mle(imageset);
     } else if (!method.compare("kde")) {
-        fit_kde();
+        fit_kde(imageset);
     } else {
         std::cout << "ERROR: unknown method : " << method << "\n";
     }
@@ -59,18 +42,34 @@ sf::Image DPEstimator::evaluate(int k, float s) {
     return image_density;
 }
 
-void DPEstimator::fit_mle() {
+void DPEstimator::fit_mle(const std::vector<std::string> & imageset) {
+    sf::Image image_info;
+    image_info.loadFromFile(imageset[0]);
+    N = (int) imageset.size();
+    WIDTH = image_info.getSize().x;
+    HEIGHT = image_info.getSize().y;
+    
+    tensorDensity = std::vector<std::vector<std::vector<float>>>(WIDTH, std::vector<std::vector<float>>(HEIGHT, std::vector<float>(N, 0.)));
+    std::vector<sf::Image> tensorPixel = std::vector<sf::Image>(N, sf::Image());
+    
+    for (int k = 0; k < N; k++)
+        tensorPixel[k].loadFromFile(imageset[k]);
+    
     for (int i = 0; i < WIDTH; i++) {
         for (int j = 0; j < HEIGHT; j++) {
+            std::vector<Vector3> timePixel(N, Vector3::Zeros());
+            for (int k = 0; k < N; k++)
+                timePixel[k] = Vector3(tensorPixel[k].getPixel(i, j));
+            
             MLEstimator mlestimator;
-            mlestimator.fit(tensorPixel[i][j]);
+            mlestimator.fit(timePixel);
             
             for (int k = 0; k < N; k++)
-                tensorDensity[i][j][k] = mlestimator.evaluate(tensorPixel[i][j][k], false);
+                tensorDensity[i][j][k] = mlestimator.evaluate(timePixel[k], false);
         }
     }
 }
 
-void DPEstimator::fit_kde() {
+void DPEstimator::fit_kde(const std::vector<std::string> & imageset) {
     
 }

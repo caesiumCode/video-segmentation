@@ -35,6 +35,7 @@ public:
     }
     
     Matrix3 outerp();
+    sf::Color toColor();
 };
 
 // Overload operations
