@@ -37,7 +37,7 @@ private:
     bool isSupported(std::string);
     void loadImageset(std::string);
     void computeImagesetMean();
-    void computeImagesetCov();
+    void computeImagesetVar();
     
     void updateSegmentationImage(int);
     
@@ -54,9 +54,9 @@ private:
     std::vector<std::string> imageset;
     int imageset_size, imageset_index;
     sf::Vector2u imageset_dim;
-    sf::Image image_mean, image_cov;
-    sf::Texture texture_mean, texture_cov;
-    sf::Sprite sprite_mean, sprite_cov;
+    sf::Image image_mean, image_var;
+    sf::Texture texture_mean, texture_var;
+    sf::Sprite sprite_mean, sprite_var;
     int display_mode;
     
     DPEstimator dpestimator;

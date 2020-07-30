@@ -17,18 +17,16 @@ Program::Program(std::string inputPath) {
     texture_mean.loadFromImage(image_mean);
     sprite_mean.setTexture(texture_mean);
     
-    computeImagesetCov();
-    texture_cov.loadFromImage(image_cov);
-    sprite_cov.setTexture(texture_cov);
+    computeImagesetVar();
+    texture_var.loadFromImage(image_var);
+    sprite_var.setTexture(texture_var);
     
-    // Setup scale
+    // Setup sprites
     display_mode = 0;
     window_scale = getWindowScale(imageset_dim);
-    sprite_mean.scale(window_scale, window_scale);
-    sprite_cov.scale(window_scale, window_scale);
-    
-    // Setup sprite
     sprite.scale(window_scale, window_scale);
+    sprite_mean.scale(window_scale, window_scale);
+    sprite_var.scale(window_scale, window_scale);
     
     // Setup window
     window.create(sf::VideoMode(window_scale*imageset_dim.x, window_scale*imageset_dim.y), TITLE);
@@ -76,7 +74,7 @@ void Program::run() {
                 break;
                 
             case 2:
-                window.draw(sprite_cov);
+                window.draw(sprite_var);
                 break;
                 
             default:
@@ -177,9 +175,12 @@ void Program::loadImageset(std::string inputPath) {
 }
 
 void Program::computeImagesetMean() {
+    std::cout << "INFO: Compute mean image\n";
+    
     image_mean.create(imageset_dim.x, imageset_dim.y);
     std::vector<std::vector<Vector3>> temp_mean(imageset_dim.x, std::vector<Vector3>(imageset_dim.y, Vector3::Zeros()));
     
+    // Sum all the pixels
     for (int k = 0; k < imageset_size; k++) {
         sf::Image image_temp;
         image_temp.loadFromFile(imageset[k]);
@@ -191,6 +192,7 @@ void Program::computeImagesetMean() {
         }
     }
     
+    // Compute the actual mean
     for (int i = 0; i < imageset_dim.x; i++) {
         for (int j = 0; j < imageset_dim.y; j++) {
             image_mean.setPixel(i, j, (1./float(imageset_size) * temp_mean[i][j]).toColor());
@@ -198,12 +200,15 @@ void Program::computeImagesetMean() {
     }
 }
 
-void Program::computeImagesetCov() {
-    image_cov.create(imageset_dim.x, imageset_dim.y);
+void Program::computeImagesetVar() {
+    std::cout << "INFO: Compute variance image\n";
     
-    std::vector<std::vector<float>> cov(imageset_dim.x, std::vector<float>(imageset_dim.y, 0.));
+    image_var.create(imageset_dim.x, imageset_dim.y);
+    
+    std::vector<std::vector<float>> var(imageset_dim.x, std::vector<float>(imageset_dim.y, 0.));
     float max_cov = 0;
     
+    // Sum all variance
     for (int k = 0; k < imageset_size; k++) {
         sf::Image image_temp;
         image_temp.loadFromFile(imageset[k]);
@@ -213,25 +218,27 @@ void Program::computeImagesetCov() {
                 sf::Color col = image_temp.getPixel(i, j);
                 sf::Color col_mean = image_mean.getPixel(i, j);
                 
-                cov[i][j] += float(col.r - col_mean.r)*float(col.r - col_mean.r) +
+                var[i][j] += float(col.r - col_mean.r)*float(col.r - col_mean.r) +
                              float(col.g - col_mean.g)*float(col.g - col_mean.g) +
                              float(col.b - col_mean.b)*float(col.b - col_mean.b);
             }
         }
     }
     
+    // Find the maximum value
     for (int i = 0; i < imageset_dim.x; i++) {
         for (int j = 0; j < imageset_dim.y; j++) {
-            cov[i][j] = sqrtf(cov[i][j] / float(imageset_size));
-            if (cov[i][j] > max_cov)
-                max_cov = cov[i][j];
+            var[i][j] = sqrtf(var[i][j]);
+            if (var[i][j] > max_cov)
+                max_cov = var[i][j];
         }
     }
     
+    // Normalize the variances to fit into [0, 255]
     for (int i = 0; i < imageset_dim.x; i++) {
         for (int j = 0; j < imageset_dim.y; j++) {
-            float val = cov[i][j] / float(max_cov);
-            image_cov.setPixel(i, j, sf::Color((int) val, (int) val, (int) val));
+            float val = var[i][j] / float(max_cov) * 255.;
+            image_var.setPixel(i, j, sf::Color((int) val, (int) val, (int) val));
         }
     }
 }
