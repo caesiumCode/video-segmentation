@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 #include <SFML/Graphics.hpp>
 
@@ -34,6 +35,8 @@ private:
     
     bool isSupported(std::string);
     void loadImageset(std::string);
+    void computeImagesetMean();
+    void computeImagesetCov();
     
     void updateSegmentationImage(int);
     
@@ -49,9 +52,13 @@ private:
     std::vector<sf::Image> imageset;
     int imageset_size, imageset_index;
     sf::Vector2u imageset_dim;
+    sf::Image image_mean, image_cov;
+    sf::Texture texture_mean, texture_cov;
+    sf::Sprite sprite_mean, sprite_cov;
+    int display_mode;
     
     DPEstimator dpestimator;
-    float threshold = 0.1;
+    float threshold, log_threshold;
     sf::Texture texture_segmentation;
     sf::Sprite sprite_segmentation;
 };

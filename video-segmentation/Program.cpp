@@ -12,8 +12,20 @@ Program::Program(std::string inputPath) {
     // Load imageset
     loadImageset(inputPath);
     
+    // Get mean/cov images
+    computeImagesetMean();
+    texture_mean.loadFromImage(image_mean);
+    sprite_mean.setTexture(texture_mean);
+    
+    computeImagesetCov();
+    texture_cov.loadFromImage(image_cov);
+    sprite_cov.setTexture(texture_cov);
+    
     // Setup scale
+    display_mode = 0;
     window_scale = getWindowScale(imageset_dim);
+    sprite_mean.scale(window_scale, window_scale);
+    sprite_cov.scale(window_scale, window_scale);
     
     // Setup sprite
     texture.loadFromImage(imageset[imageset_index]);
@@ -23,6 +35,10 @@ Program::Program(std::string inputPath) {
     // Setup window
     window.create(sf::VideoMode(window_scale*imageset_dim.x, window_scale*imageset_dim.y), TITLE);
     window.setFramerateLimit(30);
+    
+    // Setup thresholds
+    log_threshold = -10.;
+    threshold = expf(log_threshold);
     
     // Compute segmentation mask
     std::cout << "INFO: Transforming imageset\n";
@@ -55,7 +71,22 @@ void Program::run() {
         
         window.clear();
         
-        window.draw(sprite);
+        switch (display_mode) {
+            case 0:
+                window.draw(sprite);
+                break;
+                
+            case 1:
+                window.draw(sprite_mean);
+                break;
+                
+            case 2:
+                window.draw(sprite_cov);
+                break;
+                
+            default:
+                break;
+        }
         window.draw(sprite_segmentation);
         
         window.display();
@@ -82,6 +113,30 @@ void Program::handleEvent(sf::Event event) {
                 texture.update(imageset[imageset_index]);
                 
                 updateSegmentationImage(imageset_index);
+                break;
+                
+            case sf::Keyboard::Up:
+                log_threshold++;
+                threshold = expf(log_threshold);
+                updateSegmentationImage(imageset_index);
+                break;
+                
+            case sf::Keyboard::Down:
+                log_threshold--;
+                threshold = expf(log_threshold);
+                updateSegmentationImage(imageset_index);
+                break;
+                
+            case sf::Keyboard::Numpad0:
+                display_mode = 0;
+                break;
+                
+            case sf::Keyboard::Numpad1:
+                display_mode = 1;
+                break;
+                
+            case sf::Keyboard::Numpad2:
+                display_mode = 2;
                 break;
                 
             default:
@@ -131,7 +186,63 @@ void Program::loadImageset(std::string inputPath) {
     imageset_dim = imageset[0].getSize();
 }
 
+void Program::computeImagesetMean() {
+    image_mean.create(imageset_dim.x, imageset_dim.y);
+    
+    for (int i = 0; i < imageset_dim.x; i++) {
+        for (int j = 0; j < imageset_dim.y; j++) {
+            float r = 0., g = 0., b = 0.;
+            for (int k = 0; k < imageset_size; k++) {
+                sf::Color col = imageset[k].getPixel(i, j);
+                r += (float) col.r;
+                g += (float) col.g;
+                b += (float) col.b;
+            }
+            r /= (float) imageset_size;
+            g /= (float) imageset_size;
+            b /= (float) imageset_size;
+                        
+            image_mean.setPixel(i, j, sf::Color((int) r, (int) g, (int) b));
+        }
+    }
+}
+
+void Program::computeImagesetCov() {
+    image_cov.create(imageset_dim.x, imageset_dim.y);
+    
+    std::vector<std::vector<float>> cov(imageset_dim.x, std::vector<float>(imageset_dim.y, 0.));
+    float max_cov = 0;
+    
+    for (int i = 0; i < imageset_dim.x; i++) {
+        for (int j = 0; j < imageset_dim.y; j++) {
+            float r = 0., g = 0., b = 0.;
+            for (int k = 0; k < imageset_size; k++) {
+                sf::Color col = imageset[k].getPixel(i, j);
+                sf::Color col_mean = image_mean.getPixel(i, j);
+                
+                r += float(col.r - col_mean.r)*float(col.r - col_mean.r);
+                g += float(col.g - col_mean.g)*float(col.g - col_mean.g);
+                b += float(col.b - col_mean.b)*float(col.b - col_mean.b);
+            }
+            r /= (float) imageset_size;
+            g /= (float) imageset_size;
+            b /= (float) imageset_size;
+            
+            cov[i][j] = sqrtf(r + g + b);
+            if (cov[i][j] > max_cov)
+                max_cov = cov[i][j];
+        }
+    }
+    
+    for (int i = 0; i < imageset_dim.x; i++) {
+        for (int j = 0; j < imageset_dim.y; j++) {
+            cov[i][j] = cov[i][j] / max_cov * 255.;
+            
+            image_cov.setPixel(i, j, sf::Color((int) cov[i][j], (int) cov[i][j], (int) cov[i][j]));
+        }
+    }
+}
+
 void Program::updateSegmentationImage(int k) {
-    std::cout << "INFO: Extract segmentation mask " << k+1 << "/" << imageset_size << "\n";
     texture_segmentation.update(dpestimator.evaluate(k, threshold));
 }
