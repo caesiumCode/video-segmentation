@@ -28,14 +28,10 @@ sf::Image DPEstimator::evaluate(int k, float s) {
     
     for (int i = 0; i < WIDTH; i++) {
         for (int j = 0; j < HEIGHT; j++) {
-            float a = tensorDensity[i][j][k];
-            if (a <= s)
-                a = (1. - a) * 255.;
+            if (tensorDensity[i][j][k] <= s)
+                image_density.setPixel(i, j, sf::Color::Red);
             else
-                a = 0.;
-            
-            sf::Color col(255, 0, 0, (int) a);
-            image_density.setPixel(i, j, col);
+                image_density.setPixel(i, j, sf::Color::Transparent);
         }
     }
     
@@ -43,27 +39,34 @@ sf::Image DPEstimator::evaluate(int k, float s) {
 }
 
 void DPEstimator::fit_mle(const std::vector<std::string> & imageset) {
+    // Get the tensor dimensions
     sf::Image image_info;
     image_info.loadFromFile(imageset[0]);
     N = (int) imageset.size();
     WIDTH = image_info.getSize().x;
     HEIGHT = image_info.getSize().y;
     
+    // Initialize the tensors
     tensorDensity = std::vector<std::vector<std::vector<float>>>(WIDTH, std::vector<std::vector<float>>(HEIGHT, std::vector<float>(N, 0.)));
     std::vector<sf::Image> tensorPixel = std::vector<sf::Image>(N, sf::Image());
     
+    // Load temporary the images in the RAM for faster computation
     for (int k = 0; k < N; k++)
         tensorPixel[k].loadFromFile(imageset[k]);
     
+    // Estimate the pixel density for each 'timepixel'
     for (int i = 0; i < WIDTH; i++) {
         for (int j = 0; j < HEIGHT; j++) {
+            // Load the timepixel
             std::vector<Vector3> timePixel(N, Vector3::Zeros());
             for (int k = 0; k < N; k++)
                 timePixel[k] = Vector3(tensorPixel[k].getPixel(i, j));
             
+            // Fit the ML estimator
             MLEstimator mlestimator;
             mlestimator.fit(timePixel);
             
+            // Estimate the (proportionnal) density for each pixel
             for (int k = 0; k < N; k++)
                 tensorDensity[i][j][k] = mlestimator.evaluate(timePixel[k], false);
         }
