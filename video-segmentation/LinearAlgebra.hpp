@@ -34,7 +34,7 @@ public:
         return Vector3(1, 1, 1);
     }
     
-    Matrix3 outerp();
+    friend Matrix3 outerp(Vector3);
     sf::Color toColor();
 };
 
@@ -61,6 +61,9 @@ public:
     }
     static Matrix3 Eye() {
         return Matrix3(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1));
+    }
+    static Matrix3 Diag(float a, float b, float c) {
+        return Matrix3(Vector3(a, 0, 0), Vector3(0, b, 0), Vector3(0, 0, c));
     }
     
     Matrix3 inverse();

@@ -67,12 +67,39 @@ void DPEstimator::fit_mle(const std::vector<std::string> & imageset) {
             mlestimator.fit(timePixel);
             
             // Estimate the (proportionnal) density for each pixel
-            for (int k = 0; k < N; k++)
-                tensorDensity[i][j][k] = mlestimator.evaluate(timePixel[k], false);
+            tensorDensity[i][j] = mlestimator.evaluate(timePixel, false);
         }
     }
 }
 
 void DPEstimator::fit_kde(const std::vector<std::string> & imageset) {
+    // Get the tensor dimensions
+    sf::Image image_info;
+    image_info.loadFromFile(imageset[0]);
+    N = (int) imageset.size();
+    WIDTH = image_info.getSize().x;
+    HEIGHT = image_info.getSize().y;
     
+    // Initialize the tensors
+    tensorDensity = std::vector<std::vector<std::vector<float>>>(WIDTH, std::vector<std::vector<float>>(HEIGHT, std::vector<float>(N, 0.)));
+    std::vector<sf::Image> tensorPixel = std::vector<sf::Image>(N, sf::Image());
+    
+    // Load temporary the images in the RAM for faster computation
+    for (int k = 0; k < N; k++)
+        tensorPixel[k].loadFromFile(imageset[k]);
+    
+    // Estimate the pixel density for each 'timepixel'
+    for (int i = 0; i < WIDTH; i++) {
+        std::cout << i << " sur " << WIDTH-1 << std::endl;
+        for (int j = 0; j < HEIGHT; j++) {
+            // Load the timepixel
+            std::vector<Vector3> timePixel(N, Vector3::Zeros());
+            for (int k = 0; k < N; k++)
+                timePixel[k] = Vector3(tensorPixel[k].getPixel(i, j));
+            
+            // Fit the KD estimator & estimate the density
+            KDEstimator kdestimator;
+            tensorDensity[i][j] = kdestimator.fit_evaluate(timePixel);
+        }
+    }
 }

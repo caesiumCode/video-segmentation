@@ -17,6 +17,7 @@
 
 #include "LinearAlgebra.hpp"
 #include "MLEstimator.hpp"
+#include "KDEstimator.hpp"
 
 // Density Pixel Estimator
 class DPEstimator {
