@@ -15,16 +15,15 @@ int main(int argc, const char * argv[]) {
     // Get the input path
     std::string inputPath = "";
     for (int i = 0; i < argc; i++)
-        if (std::strcmp(argv[i], "-i") == 0 && argc > i+1)
+        if (argc > i+1 && std::strcmp(argv[i], "-i") == 0)
             inputPath = std::string(argv[i+1]);
     
     // If input path is given we run the program
     if (inputPath.compare("") != 0) {
         Program program(inputPath);
         program.run();
-    } else {
+    } else
         std::cout << "ERROR: input path not given\n";
-    }
     
     return 0;
 }

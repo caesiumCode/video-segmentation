@@ -26,13 +26,16 @@ public:
     
     void fit(const std::vector<std::string> &, std::string);
     
-    sf::Image evaluate(int, float);
+    sf::Image evaluate(int, float, float);
     
 private:
-    sf::Color RGBtoYCbCr(sf::Color);
+    static Vector3 RGBtoYCbCr(sf::Color);
+    static Vector3 RGBtoHSL(sf::Color);
     
     void fit_mle(const std::vector<std::string> &);
     void fit_kde(const std::vector<std::string> &);
+    
+    void spread(sf::Image&, int, int, int, float);
     
     int N, WIDTH, HEIGHT;
     

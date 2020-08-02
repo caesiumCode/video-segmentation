@@ -34,7 +34,9 @@ Program::Program(std::string inputPath) {
     
     // Setup thresholds
     log_threshold = -10.;
+    delta_log_threshold = 0.;
     threshold = expf(log_threshold);
+    threshold2 = expf(log_threshold + delta_log_threshold);
     
     // Compute segmentation mask
     std::cout << "INFO: Running segmentation algorithm - Maximum likelihood Estimator with normal distribution\n";
@@ -46,9 +48,9 @@ Program::Program(std::string inputPath) {
     std::cout << "INFO: Extract segmentation mask\n";
     mask_mode = "mle";
     if (mask_mode.compare("mle") == 0)
-        texture_segmentation.loadFromImage(dpestimator_mle.evaluate(imageset_index, threshold));
+        texture_segmentation.loadFromImage(dpestimator_mle.evaluate(imageset_index, threshold, threshold2));
     else if (mask_mode.compare("kde") == 0)
-        texture_segmentation.loadFromImage(dpestimator_kde.evaluate(imageset_index, threshold));
+        texture_segmentation.loadFromImage(dpestimator_kde.evaluate(imageset_index, threshold, threshold2));
     else {
         std::cout << "ERROR: Unknown mask mode: " << mask_mode << std::endl;
     }
@@ -121,15 +123,11 @@ void Program::handleEvent(sf::Event event) {
                 break;
                 
             case sf::Keyboard::Up:
-                log_threshold++;
-                threshold = expf(log_threshold);
-                updateSegmentationImage();
+                updateThreshold(+1, 0);
                 break;
                 
             case sf::Keyboard::Down:
-                log_threshold--;
-                threshold = expf(log_threshold);
-                updateSegmentationImage();
+                updateThreshold(-1, 0);
                 break;
                 
             case sf::Keyboard::Numpad0:
@@ -164,6 +162,14 @@ void Program::handleEvent(sf::Event event) {
             case sf::Keyboard::K:
                 mask_mode = "kde";
                 updateSegmentationImage();
+                break;
+                
+            case sf::Keyboard::A:
+                updateThreshold(0, +1);
+                break;
+                
+            case sf::Keyboard::Q:
+                updateThreshold(0, -1);
                 break;
                 
             default:
@@ -275,11 +281,22 @@ void Program::computeImagesetVar() {
     }
 }
 
+void Program::updateThreshold(int s1, int s2) {
+    log_threshold += s1;
+    if (s2 > 0 || delta_log_threshold > 0)
+        delta_log_threshold += s2;
+    
+    threshold = expf(log_threshold);
+    threshold2 = expf(log_threshold + delta_log_threshold);
+    
+    updateSegmentationImage();
+}
+
 void Program::updateSegmentationImage() {
     if (mask_mode.compare("mle") == 0)
-        texture_segmentation.update(dpestimator_mle.evaluate(imageset_index, threshold));
+        texture_segmentation.update(dpestimator_mle.evaluate(imageset_index, threshold, threshold2));
     else if (mask_mode.compare("kde") == 0)
-        texture_segmentation.update(dpestimator_kde.evaluate(imageset_index, threshold));
+        texture_segmentation.update(dpestimator_kde.evaluate(imageset_index, threshold, threshold2));
     else
         std::cout << "ERROR: Unknown mask mode: " << mask_mode << std::endl;
 }
