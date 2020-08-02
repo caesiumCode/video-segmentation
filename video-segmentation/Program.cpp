@@ -37,11 +37,21 @@ Program::Program(std::string inputPath) {
     threshold = expf(log_threshold);
     
     // Compute segmentation mask
-    std::cout << "INFO: Running segmentation algorithm\n";
-    dpestimator.fit(imageset, "mle");
+    std::cout << "INFO: Running segmentation algorithm - Maximum likelihood Estimator with normal distribution\n";
+    dpestimator_mle.fit(imageset, "mle");
+    
+    std::cout << "INFO: Running segmentation algorithm - Kernel density Estimator with normal kernel\n";
+    dpestimator_kde.fit(imageset, "kde");
     
     std::cout << "INFO: Extract segmentation mask\n";
-    texture_segmentation.loadFromImage(dpestimator.evaluate(imageset_index, threshold));
+    mask_mode = "mle";
+    if (mask_mode.compare("mle") == 0)
+        texture_segmentation.loadFromImage(dpestimator_mle.evaluate(imageset_index, threshold));
+    else if (mask_mode.compare("kde") == 0)
+        texture_segmentation.loadFromImage(dpestimator_kde.evaluate(imageset_index, threshold));
+    else {
+        std::cout << "ERROR: Unknown mask mode: " << mask_mode << std::endl;
+    }
     sprite_segmentation.setTexture(texture_segmentation);
     sprite_segmentation.scale(window_scale, window_scale);
 }
@@ -97,7 +107,7 @@ void Program::handleEvent(sf::Event event) {
                 image.loadFromFile(imageset[imageset_index]);
                 texture.update(image);
                 
-                updateSegmentationImage(imageset_index);
+                updateSegmentationImage();
                 break;
             
             case sf::Keyboard::Left:
@@ -107,22 +117,26 @@ void Program::handleEvent(sf::Event event) {
                 image.loadFromFile(imageset[imageset_index]);
                 texture.update(image);
                 
-                updateSegmentationImage(imageset_index);
+                updateSegmentationImage();
                 break;
                 
             case sf::Keyboard::Up:
                 log_threshold++;
                 threshold = expf(log_threshold);
-                updateSegmentationImage(imageset_index);
+                updateSegmentationImage();
                 break;
                 
             case sf::Keyboard::Down:
                 log_threshold--;
                 threshold = expf(log_threshold);
-                updateSegmentationImage(imageset_index);
+                updateSegmentationImage();
                 break;
                 
             case sf::Keyboard::Numpad0:
+                display_mode = 0;
+                break;
+                
+            case sf::Keyboard::Num0:
                 display_mode = 0;
                 break;
                 
@@ -130,8 +144,26 @@ void Program::handleEvent(sf::Event event) {
                 display_mode = 1;
                 break;
                 
+            case sf::Keyboard::Num1:
+                display_mode = 1;
+                break;
+                
             case sf::Keyboard::Numpad2:
                 display_mode = 2;
+                break;
+                
+            case sf::Keyboard::Num2:
+                display_mode = 2;
+                break;
+                
+            case sf::Keyboard::M:
+                mask_mode = "mle";
+                updateSegmentationImage();
+                break;
+                
+            case sf::Keyboard::K:
+                mask_mode = "kde";
+                updateSegmentationImage();
                 break;
                 
             default:
@@ -243,6 +275,11 @@ void Program::computeImagesetVar() {
     }
 }
 
-void Program::updateSegmentationImage(int k) {
-    texture_segmentation.update(dpestimator.evaluate(k, threshold));
+void Program::updateSegmentationImage() {
+    if (mask_mode.compare("mle") == 0)
+        texture_segmentation.update(dpestimator_mle.evaluate(imageset_index, threshold));
+    else if (mask_mode.compare("kde") == 0)
+        texture_segmentation.update(dpestimator_kde.evaluate(imageset_index, threshold));
+    else
+        std::cout << "ERROR: Unknown mask mode: " << mask_mode << std::endl;
 }

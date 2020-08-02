@@ -19,9 +19,10 @@ class MLEstimator {
 public:
     MLEstimator();
     
-    void fit(std::vector<Vector3> &);
+    void fit(const std::vector<Vector3> &);
     
     float evaluate(Vector3, bool);
+    std::vector<float> evaluate(const std::vector<Vector3> &, bool);
     
 private:
     int n;

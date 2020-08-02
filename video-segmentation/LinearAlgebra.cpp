@@ -35,10 +35,10 @@ Vector3::Vector3(sf::Color col) {
     z = (float) col.b;
 }
 
-Matrix3 Vector3::outerp() {
-    return Matrix3(Vector3(x*x, x*y, x*z),
-                   Vector3(y*x, y*y, y*z),
-                   Vector3(z*x, z*y, z*z));
+Matrix3 outerp(Vector3 u) {
+    return Matrix3(Vector3(u.x*u.x, u.x*u.y, u.x*u.z),
+                   Vector3(u.y*u.x, u.y*u.y, u.y*u.z),
+                   Vector3(u.z*u.x, u.z*u.y, u.z*u.z));
 }
 
 sf::Color Vector3::toColor() {
