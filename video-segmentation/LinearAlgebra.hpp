@@ -66,6 +66,7 @@ public:
         return Matrix3(Vector3(a, 0, 0), Vector3(0, b, 0), Vector3(0, 0, c));
     }
     
+    float det();
     Matrix3 inverse();
 };
 

@@ -14,6 +14,7 @@
 
 #include "LinearAlgebra.hpp"
 
+// Kernel density estimator (normal kernel)
 class KDEstimator {
 public:
     KDEstimator();

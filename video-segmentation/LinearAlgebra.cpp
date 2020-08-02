@@ -75,16 +75,20 @@ Matrix3::Matrix3(Vector3 u, Vector3 v, Vector3 w) {
     z = w;
 }
 
+float Matrix3::det() {
+    return x.x*(y.y*z.z - y.z*z.y) - x.y*(y.x*z.z - y.z*z.x) + x.z*(y.x*z.y - y.y*z.x);
+}
+
 Matrix3 Matrix3::inverse() {
-    float det = x.x*(y.y*z.z - y.z*z.y) - x.y*(y.x*z.z - y.z*z.x) + x.z*(y.x*z.y - y.y*z.x);
+    float d = det();
     
-    if (det == 0) {
+    if (d == 0) {
         //std::cout << "ERROR: Inverse matrix of rank 0\n";
         return Matrix3::Zeros();
     } else {
-        return 1./det * Matrix3(Vector3(y.y*z.z - y.z*z.y, x.z*z.y - x.y*z.z, x.y*y.z - x.z*y.y),
-                                Vector3(y.z*z.x - y.x*z.z, x.x*z.z - x.z*z.x, x.z*y.x - x.x*y.z),
-                                Vector3(y.x*z.y - y.y*z.x, x.y*z.x - x.x*z.y, x.x*y.y - x.y*y.x));
+        return 1./d * Matrix3(Vector3(y.y*z.z - y.z*z.y, x.z*z.y - x.y*z.z, x.y*y.z - x.z*y.y),
+                              Vector3(y.z*z.x - y.x*z.z, x.x*z.z - x.z*z.x, x.z*y.x - x.x*y.z),
+                              Vector3(y.x*z.y - y.y*z.x, x.y*z.x - x.x*z.y, x.x*y.y - x.y*y.x));
     }
 }
 
