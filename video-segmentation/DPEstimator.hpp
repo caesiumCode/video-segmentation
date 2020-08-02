@@ -29,6 +29,8 @@ public:
     sf::Image evaluate(int, float);
     
 private:
+    sf::Color RGBtoYCbCr(sf::Color);
+    
     void fit_mle(const std::vector<std::string> &);
     void fit_kde(const std::vector<std::string> &);
     

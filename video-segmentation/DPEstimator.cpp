@@ -60,7 +60,7 @@ void DPEstimator::fit_mle(const std::vector<std::string> & imageset) {
             // Load the timepixel
             std::vector<Vector3> timePixel(N, Vector3::Zeros());
             for (int k = 0; k < N; k++)
-                timePixel[k] = Vector3(tensorPixel[k].getPixel(i, j));
+                timePixel[k] = Vector3(RGBtoYCbCr(tensorPixel[k].getPixel(i, j)));
             
             // Fit the ML estimator
             MLEstimator mlestimator;
@@ -95,11 +95,19 @@ void DPEstimator::fit_kde(const std::vector<std::string> & imageset) {
             // Load the timepixel
             std::vector<Vector3> timePixel(N, Vector3::Zeros());
             for (int k = 0; k < N; k++)
-                timePixel[k] = Vector3(tensorPixel[k].getPixel(i, j));
+                timePixel[k] = Vector3(RGBtoYCbCr(tensorPixel[k].getPixel(i, j)));
             
             // Fit the KD estimator & estimate the density
             KDEstimator kdestimator;
             tensorDensity[i][j] = kdestimator.fit_evaluate(timePixel);
         }
     }
+}
+
+sf::Color DPEstimator::RGBtoYCbCr(sf::Color col) {
+    float Y = 0.299 * float(col.r) + 0.587 * float(col.g) + 0.114 * float(col.b);
+    float Cb = 128. - 0.1687 * float(col.r) - 0.3313 * float(col.g) + 0.5 * float(col.b);
+    float Cr = 128. + 0.5 * float(col.r) - 0.4187 * float(col.g) - 0.0813 * float(col.b);
+    
+    return sf::Color((int) Y, (int) Cb, (int) Cr);
 }
