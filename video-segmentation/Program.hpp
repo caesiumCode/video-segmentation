@@ -39,6 +39,7 @@ private:
     void computeImagesetMean();
     void computeImagesetVar();
     
+    void updateThreshold(int, int);
     void updateSegmentationImage();
     
     float getWindowScale(sf::Vector2u);
@@ -62,6 +63,7 @@ private:
     DPEstimator dpestimator_mle, dpestimator_kde;
     std::string mask_mode;
     float threshold, log_threshold;
+    float threshold2, delta_log_threshold;
     sf::Texture texture_segmentation;
     sf::Sprite sprite_segmentation;
 };
